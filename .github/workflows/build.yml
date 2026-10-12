@@ -1,0 +1,50 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Тесты и проверки
+        run: ./gradlew --no-daemon testDebugUnitTest lintDebug
+      - name: Ключ подписи
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          KS: ${{ secrets.A1_KEYSTORE_B64 }}
+        run: |
+          test -n "$KS" || { echo "нет секрета A1_KEYSTORE_B64"; exit 1; }
+          echo "$KS" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "A1_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+      - name: Сборка
+        env:
+          A1_KEYSTORE_PASSWORD: ${{ secrets.A1_KEYSTORE_PASSWORD }}
+          A1_KEY_ALIAS: ${{ secrets.A1_KEY_ALIAS }}
+          A1_KEY_PASSWORD: ${{ secrets.A1_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: app/build/outputs/apk/release/*.apk
+      - name: Релиз
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          grep -q "versionName = \"$v\"" app/build.gradle.kts || { echo "versionName не совпадает с тегом"; exit 1; }
+          cp app/build/outputs/apk/release/app-release.apk "submw-$GITHUB_REF_NAME.apk"
+          gh release create "$GITHUB_REF_NAME" "submw-$GITHUB_REF_NAME.apk" --title "$v" --notes-file <(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")
