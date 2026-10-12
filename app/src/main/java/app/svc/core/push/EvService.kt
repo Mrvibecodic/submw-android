@@ -16,6 +16,7 @@ import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.IBinder
 import app.svc.core.a1.Client
+import app.svc.core.a1.int
 import app.svc.core.a1.long
 import app.svc.core.a1.map
 import app.svc.core.store.Prefs
@@ -42,19 +43,21 @@ object Push {
         if (p.push == Prefs.PUSH_LIVE && paired) ctx.startForegroundService(svc) else ctx.stopService(svc)
     }
 
-    fun once(ctx: Context, waitSec: Int, client: Client? = null): Boolean {
+    // -1 — не вышло; иначе пауза в секундах перед следующим запросом (0 — сразу).
+    // Паузу просит прослойка, когда все места для ожидания заняты другими телефонами.
+    fun once(ctx: Context, waitSec: Int, client: Client? = null): Int {
         val v = Vault(ctx)
         val p = Prefs(ctx)
-        val dev = v.device() ?: return false
-        val host = v.host().ifEmpty { return false }
+        val dev = v.device() ?: return -1
+        val host = v.host().ifEmpty { return -1 }
         val c = client ?: Client(host, dev) { v.saveDevice(dev, host) }
         val want = p.wanted()
         val r = c.call("ev", mapOf("c" to p.cursor, "w" to if (p.cursor < 0) 0 else waitSec, "k" to want), readMs = (waitSec + 25) * 1000)
-        if (r.st != 200) return false
+        if (r.st != 200) return -1
         val e = r.f.map("e")
         if (p.cursor >= 0 && e.isNotEmpty()) Notifier.post(ctx, e)
         p.cursor = r.f.long("c", p.cursor)
-        return true
+        return r.f.int("r").coerceIn(0, 900)
     }
 }
 
@@ -125,13 +128,15 @@ class EvService : Service() {
             w = w.coerceIn(25, top)
             val t0 = System.currentTimeMillis()
             try {
-                if (!Push.once(this, w, c)) {
+                val pause = Push.once(this, w, c)
+                if (pause < 0) {
                     nap(60_000)
                     continue
                 }
                 val spent = ((System.currentTimeMillis() - t0) / 1000).toInt()
-                if (spent >= w - 3 && w < top) w = minOf(w + 30, top)
+                if (pause == 0 && spent >= w - 3 && w < top) w = minOf(w + 30, top)
                 fails = 0
+                if (pause > 0) nap(maxOf(5, pause) * 1000L)
             } catch (e: Client.Silent) {
                 fails++
                 nap(300_000)
@@ -161,7 +166,7 @@ class EcoJob : JobService() {
     override fun onStartJob(params: JobParameters): Boolean {
         Thread {
             var ok = false
-            try { ok = Push.once(this, 0) } catch (_: Exception) {}
+            try { ok = Push.once(this, 0) >= 0 } catch (_: Exception) {}
             jobFinished(params, !ok)
         }.start()
         return true
