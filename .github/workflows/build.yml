@@ -47,4 +47,5 @@ jobs:
           v="${GITHUB_REF_NAME#v}"
           grep -q "versionName = \"$v\"" app/build.gradle.kts || { echo "versionName не совпадает с тегом"; exit 1; }
           cp app/build/outputs/apk/release/app-release.apk "submw-$GITHUB_REF_NAME.apk"
+          git fetch --force --depth=1 origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
           gh release create "$GITHUB_REF_NAME" "submw-$GITHUB_REF_NAME.apk" --title "$v" --notes-file <(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")
