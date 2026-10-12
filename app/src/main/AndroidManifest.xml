@@ -1,4 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:label="Сервис" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <application
+        android:label="@string/m_default"
+        android:icon="@mipmap/l_default"
+        android:roundIcon="@mipmap/l_default"
+        android:theme="@style/A1"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/no_backup"
+        android:networkSecurityConfig="@xml/net"
+        android:supportsRtl="false">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="false"
+            android:windowSoftInputMode="adjustResize"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode|density|fontScale" />
+
+        <activity-alias
+            android:name=".m.Default"
+            android:targetActivity=".ui.MainActivity"
+            android:label="@string/m_default"
+            android:icon="@mipmap/l_default"
+            android:roundIcon="@mipmap/l_default"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".m.Notes"
+            android:targetActivity=".ui.MainActivity"
+            android:label="@string/m_notes"
+            android:icon="@mipmap/l_notes"
+            android:roundIcon="@mipmap/l_notes"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".m.Calc"
+            android:targetActivity=".ui.MainActivity"
+            android:label="@string/m_calc"
+            android:icon="@mipmap/l_calc"
+            android:roundIcon="@mipmap/l_calc"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".m.Weather"
+            android:targetActivity=".ui.MainActivity"
+            android:label="@string/m_weather"
+            android:icon="@mipmap/l_weather"
+            android:roundIcon="@mipmap/l_weather"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".m.Files"
+            android:targetActivity=".ui.MainActivity"
+            android:label="@string/m_files"
+            android:icon="@mipmap/l_files"
+            android:roundIcon="@mipmap/l_files"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".m.Clock"
+            android:targetActivity=".ui.MainActivity"
+            android:label="@string/m_clock"
+            android:icon="@mipmap/l_clock"
+            android:roundIcon="@mipmap/l_clock"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <service
+            android:name=".push.EvService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Persistent connection to the owner's own server to receive admin notifications without third-party push services" />
+        </service>
+
+        <service
+            android:name=".push.EcoJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <receiver android:name=".push.Boot" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver android:name=".push.Notifier$Cleared" android:exported="false" />
+        <receiver android:name=".update.Updater$Done" android:exported="false" />
+    </application>
 </manifest>

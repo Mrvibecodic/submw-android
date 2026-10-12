@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="m_default">Сервис</string>
+    <string name="m_notes">Заметки</string>
+    <string name="m_calc">Калькулятор</string>
+    <string name="m_weather">Погода</string>
+    <string name="m_files">Файлы</string>
+    <string name="m_clock">Часы</string>
+</resources>

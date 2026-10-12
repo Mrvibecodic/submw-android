@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#F4F7FB</color>
+    <color name="card">#FFFFFF</color>
+    <color name="line">#DDE3EC</color>
+    <color name="text">#1E293B</color>
+    <color name="muted">#58657A</color>
+    <color name="accent">#14B8A6</color>
+    <color name="on_accent">#06231F</color>
+    <color name="bad">#DC2626</color>
+    <color name="i_default">#0F766E</color>
+    <color name="i_notes">#CA8A04</color>
+    <color name="i_calc">#475569</color>
+    <color name="i_weather">#0284C7</color>
+    <color name="i_files">#2563EB</color>
+    <color name="i_clock">#7C3AED</color>
+</resources>
