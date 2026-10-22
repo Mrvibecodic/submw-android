@@ -63,19 +63,25 @@ object Notifier {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             val pi = PendingIntent.getActivity(ctx, id, open, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
             val del = PendingIntent.getBroadcast(ctx, id, Intent(ctx, Cleared::class.java).putExtra("nk", key), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-            val title = p.text(g) + if (total > 1) " · $total" else ""
+            val (name, body) = shade(key, p.custom(key), p.text(g), p.hideNames)
             val b = Notification.Builder(ctx, "g_$g")
                 .setSmallIcon(Masks.current(ctx).icon)
-                .setContentTitle(title)
+                .setContentTitle(name + if (total > 1) " · $total" else "")
                 .setContentIntent(pi)
                 .setDeleteIntent(del)
                 .setAutoCancel(true)
                 .setOnlyAlertOnce(false)
                 .setCategory(if (g == "chat") Notification.CATEGORY_MESSAGE else Notification.CATEGORY_EVENT)
-            if (g == "wh" && !p.hideNames) b.setContentText(key.removePrefix("wh:"))
+            if (body != null) b.setContentText(body)
             nm.notify(id, b.build())
         }
         ed.apply()
+    }
+
+    fun shade(key: String, custom: String?, groupText: String, hideNames: Boolean): Pair<String, String?> {
+        if (custom != null) return custom to null
+        val body = if (group(key) == "wh" && !hideNames) key.removePrefix("wh:") else null
+        return groupText to body
     }
 
     fun clear(ctx: Context, key: String) {

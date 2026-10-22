@@ -3,7 +3,10 @@ package app.svc.core.ui
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.InsetDrawable
+import android.graphics.drawable.LayerDrawable
 import android.graphics.drawable.RippleDrawable
 import android.text.InputType
 import android.util.TypedValue
@@ -13,6 +16,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -119,5 +123,68 @@ class Ui(val ctx: Context) {
     fun row(): LinearLayout = LinearLayout(ctx).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
+    }
+
+    private fun press(mask: Boolean = true): RippleDrawable =
+        RippleDrawable(ColorStateList.valueOf(0x22000000 or (accent and 0xFFFFFF)), null, if (mask) ColorDrawable(0xFFFFFFFF.toInt()) else null)
+
+    fun divider(): View = View(ctx).apply {
+        setBackgroundColor(line)
+        layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1)
+    }
+
+    fun pick(name: String, value: String, onClick: () -> Unit): LinearLayout = row().apply {
+        minimumHeight = dp(52)
+        setPadding(0, dp(8), 0, dp(8))
+        background = press()
+        addView(label(name, 15f, text), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        addView(label(value, 15f, accent).apply { setPadding(dp(10), 0, dp(6), 0) })
+        addView(label("›", 20f, muted))
+        setOnClickListener { onClick() }
+    }
+
+    fun item(name: String, value: String, custom: Boolean, onClick: () -> Unit): LinearLayout = LinearLayout(ctx).apply {
+        orientation = LinearLayout.VERTICAL
+        minimumHeight = dp(52)
+        setPadding(0, dp(9), 0, dp(9))
+        background = press()
+        addView(label(name, 12.5f, muted))
+        addView(label(value, 15.5f, if (custom) text else muted).apply { if (custom) typeface = Typeface.DEFAULT_BOLD })
+        setOnClickListener { onClick() }
+    }
+
+    fun bar(): LinearLayout = LinearLayout(ctx).apply {
+        orientation = LinearLayout.HORIZONTAL
+        background = LayerDrawable(arrayOf(ColorDrawable(line), InsetDrawable(ColorDrawable(card), 0, 1, 0, 0)))
+        setPadding(dp(6), 0, dp(6), 0)
+    }
+
+    class Tab(val view: LinearLayout, val icon: ImageView, val name: TextView)
+
+    fun tab(icon: Int, s: String, onClick: () -> Unit): Tab {
+        val img = ImageView(ctx).apply { setImageResource(icon) }
+        val t = TextView(ctx).apply {
+            text = s
+            textSize = 12f
+            gravity = Gravity.CENTER
+            setSingleLine(true)
+        }
+        val v = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            minimumHeight = dp(60)
+            background = press(false)
+            contentDescription = s
+            addView(img, LinearLayout.LayoutParams(dp(24), dp(24)))
+            addView(t, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(3) })
+            setOnClickListener { onClick() }
+        }
+        return Tab(v, img, t).also { paint(it, false) }
+    }
+
+    fun paint(t: Tab, on: Boolean) {
+        t.icon.imageTintList = ColorStateList.valueOf(if (on) accent else muted)
+        t.name.setTextColor(if (on) accent else text)
+        t.name.typeface = if (on) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
     }
 }

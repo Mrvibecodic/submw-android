@@ -10,6 +10,9 @@ class Prefs(ctx: Context) {
         const val PUSH_OFF = 0
         const val PUSH_LIVE = 1
         const val PUSH_ECO = 2
+        const val ENTRY_HOST = "host"
+        const val ENTRY_LOGIN = "login"
+        val LOCK_MIN = listOf(5, 10, 30, 60, 0)
         val GROUPS = listOf("chat", "rep", "chan_new", "wh")
         val DEFAULT_TEXT = mapOf(
             "chat" to "Новое сообщение",
@@ -58,7 +61,20 @@ class Prefs(ctx: Context) {
 
     fun text(k: String): String = sp.getString("t_$k", null)?.takeIf { it.isNotBlank() } ?: DEFAULT_TEXT[k] ?: k
 
-    fun setText(k: String, v: String) = sp.edit().putString("t_$k", v.trim()).apply()
+    fun custom(k: String): String? = sp.getString("t_$k", null)?.takeIf { it.isNotBlank() }
+
+    fun setText(k: String, v: String) {
+        val t = v.trim()
+        if (t.isEmpty()) sp.edit().remove("t_$k").apply() else sp.edit().putString("t_$k", t).apply()
+    }
+
+    var lockMin: Int
+        get() = sp.getInt("lock", 5).takeIf { it in LOCK_MIN } ?: 5
+        set(v) = sp.edit().putInt("lock", v).apply()
+
+    var entry: String
+        get() = if (sp.getString("entry", ENTRY_HOST) == ENTRY_LOGIN) ENTRY_LOGIN else ENTRY_HOST
+        set(v) = sp.edit().putString("entry", v).apply()
 
     fun label(k: String): String = sp.getString("l_$k", null)?.takeIf { it.isNotBlank() } ?: DEFAULT_LABEL[k] ?: k
 

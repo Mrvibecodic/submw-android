@@ -126,15 +126,30 @@ class LocalServer(private val client: Client, cookie: String, private val onAuth
                     onAuthLost()
                     return reply(out, 200, "text/html; charset=utf-8", page(""))
                 }
+                val type = r.headers.firstOrNull { it.first == "content-type" }?.second ?: ""
+                val plain = r.headers.none { it.first == "content-encoding" }
+                val sent = if (method != "HEAD" && plain && type.startsWith("text/html", true)) inApp(r.body) else r.body
                 val sb = StringBuilder("HTTP/1.1 ${r.st} X\r\n")
                 for ((k, v) in r.headers) sb.append(k).append(": ").append(v.replace("\r", "").replace("\n", "")).append("\r\n")
-                sb.append("content-length: ").append(if (method == "HEAD") 0 else r.body.size).append("\r\nconnection: close\r\n\r\n")
+                sb.append("content-length: ").append(if (method == "HEAD") 0 else sent.size).append("\r\nconnection: close\r\n\r\n")
                 out.write(sb.toString().toByteArray(Charsets.UTF_8))
-                if (method != "HEAD") out.write(r.body)
+                if (method != "HEAD") out.write(sent)
                 out.flush()
             } catch (_: SocketException) {
             } catch (_: IOException) {
             }
+        }
+    }
+
+    companion object {
+        private const val IN_APP = "<style>.navtoggle,.rw-out{display:none!important}</style>"
+
+        // Меню разделов и выход — в нижней панели приложения; в странице их прячем до отрисовки, без мигания.
+        fun inApp(html: ByteArray): ByteArray {
+            val at = String(html, Charsets.ISO_8859_1).indexOf("</head>", ignoreCase = true)
+            if (at < 0) return html
+            val add = IN_APP.toByteArray(Charsets.UTF_8)
+            return html.copyOfRange(0, at) + add + html.copyOfRange(at, html.size)
         }
     }
 
